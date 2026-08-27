@@ -1,9 +1,11 @@
-import cv2
-from sklearn.linear_model import LinearRegression
-import numpy as np
-import matplotlib as plt
+from src.gui import run_gui
 
-x = 2
-print(x)
-print(cv2.__version__)
+
+def main() -> int:
+    """Start the application's graphical user interface."""
+    return run_gui()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
 
