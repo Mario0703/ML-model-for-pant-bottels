@@ -147,7 +147,6 @@ class PantBottleRecognitionWindow(QWidget):
         layout.addWidget(scroll_area)
         layout.addWidget(back_button, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-
     def _create_camera_menu(self):
         """Build the camera page. Frames come from CameraInput."""
         self.camera_menu = QWidget()
@@ -157,10 +156,15 @@ class PantBottleRecognitionWindow(QWidget):
         self.camera_output.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.camera_output.setMinimumSize(640, 480)
 
+        self.camera_prediction = QLabel("Prediction: waiting for camera")
+        self.camera_prediction.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.camera_prediction.setStyleSheet("font-size: 20px; font-weight: bold;")
+
         self.camera_back_button = QPushButton("Exit camera")
         self.camera_back_button.clicked.connect(self.close_camera)
 
         layout.addWidget(self.camera_output)
+        layout.addWidget(self.camera_prediction)
         layout.addWidget(
             self.camera_back_button,
             alignment=Qt.AlignmentFlag.AlignHCenter,
@@ -172,7 +176,11 @@ class PantBottleRecognitionWindow(QWidget):
     def _update_camera_output(self):
         frame = self.camera.get_video_frame()
         if frame is None:
+            self.camera_prediction.setText("Prediction: no camera frame")
             return
+
+        prediction = self.camera.predict_image(frame, certainty=0.95)
+        self.camera_prediction.setText(f"Prediction: {prediction}")
 
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         height, width, channels = frame_rgb.shape
@@ -302,7 +310,7 @@ class PantBottleRecognitionWindow(QWidget):
 
     def show_image_menu(self):
         self.stacked_layout.setCurrentWidget(self.image_menu)
-    
+
     def show_camera_menu(self):
         self.stacked_layout.setCurrentWidget(self.camera_menu)
         self.camera_timer.start(30)
@@ -323,9 +331,9 @@ class PantBottleRecognitionWindow(QWidget):
         event.accept()
 
     def keyPressEvent(self, event):
-        if (
-            self.stacked_layout.currentWidget() == self.camera_menu
-            and event.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Q)
+        if self.stacked_layout.currentWidget() == self.camera_menu and event.key() in (
+            Qt.Key.Key_Escape,
+            Qt.Key.Key_Q,
         ):
             self.close_camera()
             return
