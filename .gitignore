@@ -207,6 +207,7 @@ tempCodeRunnerFile.py
 src/user_loaded_image/
 TraningData/
 TraningData_split/
+TraningData_detection/
 TraningData.zip
 
 # Downloaded and trained ML model artifacts
