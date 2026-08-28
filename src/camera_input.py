@@ -3,7 +3,7 @@ import cv2
 
 class CameraInput:
     def __init__(self, camera_index=0):
-        self.cam = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+        self.cam = cv2.VideoCapture(camera_index)
 
         if not self.cam.isOpened():
             raise RuntimeError("Camera could not be opened")
