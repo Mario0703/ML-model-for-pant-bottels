@@ -1,12 +1,15 @@
 import sys
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
+    QGridLayout,
     QLabel,
     QLineEdit,
     QPushButton,
+    QScrollArea,
     QStackedLayout,
     QVBoxLayout,
     QWidget,
@@ -29,9 +32,13 @@ class PantBottleRecognitionWindow(QWidget):
         self.stacked_layout = QStackedLayout()
         self._create_main_menu()
         self._create_image_menu()
+        self._create_image_list_menu()
+        self._create_predict_bottle_menu()
 
         self.stacked_layout.addWidget(self.main_menu)
         self.stacked_layout.addWidget(self.image_menu)
+        self.stacked_layout.addWidget(self.image_list_menu)
+        self.stacked_layout.addWidget(self.show_and_predict_image_menu)
         self.setLayout(self.stacked_layout)
 
     def _create_main_menu(self):
@@ -44,6 +51,7 @@ class PantBottleRecognitionWindow(QWidget):
         title.setStyleSheet("font-size: 28px; font-weight: bold;")
 
         self.bottle_image_button = QPushButton("Import image of a bottle")
+        self.list_images_button = QPushButton("List loaded images")
         self.bottle_camera_button = QPushButton(
             "Use the camera to determine if a bottle has pant"
         )
@@ -55,11 +63,16 @@ class PantBottleRecognitionWindow(QWidget):
             alignment=Qt.AlignmentFlag.AlignHCenter,
         )
         main_layout.addWidget(
+            self.list_images_button,
+            alignment=Qt.AlignmentFlag.AlignHCenter,
+        )
+        main_layout.addWidget(
             self.bottle_camera_button,
             alignment=Qt.AlignmentFlag.AlignHCenter,
         )
 
         self.bottle_image_button.clicked.connect(self.show_image_menu)
+        self.list_images_button.clicked.connect(self.show_image_list_menu)
 
     def _create_image_menu(self):
         """Build the image-selection page."""
@@ -104,6 +117,30 @@ class PantBottleRecognitionWindow(QWidget):
         self.load_image_button.clicked.connect(self.load_image_into_directory)
         self.back_button.clicked.connect(self.show_main_menu)
 
+    def _create_image_list_menu(self):
+        """Build the page showing saved images in a two-column grid."""
+        self.image_list_menu = QWidget()
+        layout = QVBoxLayout(self.image_list_menu)
+
+        title = QLabel("Loaded images")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("font-size: 28px; font-weight: bold;")
+
+        self.image_grid_container = QWidget()
+        self.image_grid = QGridLayout(self.image_grid_container)
+        self.image_grid.setSpacing(16)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(self.image_grid_container)
+
+        back_button = QPushButton("Back")
+        back_button.clicked.connect(self.show_main_menu)
+
+        layout.addWidget(title)
+        layout.addWidget(scroll_area)
+        layout.addWidget(back_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
     def _create_predict_bottle_menu(self):
         self.show_and_predict_image_menu = QWidget()
         layout = QVBoxLayout(self.show_and_predict_image_menu)
@@ -132,7 +169,7 @@ class PantBottleRecognitionWindow(QWidget):
             alignment=Qt.AlignmentFlag.AlignHCenter,
         )
 
-        self.predict_back_button.clicked.connect(self.show_image_menu)
+        self.predict_back_button.clicked.connect(self.show_image_list_menu)
 
     def select_image(self):
         """Prompt for an image file and display its path in the input field."""
@@ -162,6 +199,47 @@ class PantBottleRecognitionWindow(QWidget):
 
         self.load_status.setText(f"Image loaded: {self.saved_image_path.name}")
 
+    def show_image_list_menu(self):
+        """Refresh the saved-image grid and display it."""
+        self._clear_image_grid()
+
+        image_extensions = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
+        image_paths = sorted(
+            path
+            for path in self.image_loader.destination_directory.iterdir()
+            if path.is_file() and path.suffix.lower() in image_extensions
+        )
+
+        if not image_paths:
+            self.image_grid.addWidget(QLabel("No images have been loaded yet."), 0, 0)
+        else:
+            for index, image_path in enumerate(image_paths):
+                self._add_image_card(image_path, index)
+
+        self.stacked_layout.setCurrentWidget(self.image_list_menu)
+
+    def _clear_image_grid(self):
+        while self.image_grid.count():
+            item = self.image_grid.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+    def _add_image_card(self, image_path, index):
+        """Add an image name and its Predict button to one grid cell."""
+        card = QWidget()
+        card_layout = QVBoxLayout(card)
+
+        image_name = QLabel(image_path.name)
+        image_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        predict_button = QPushButton("Predict")
+        predict_button.clicked.connect(
+            lambda checked=False, path=image_path: self.show_predict_bottle_menu(path)
+        )
+
+        card_layout.addWidget(image_name)
+        card_layout.addWidget(predict_button)
+        self.image_grid.addWidget(card, index // 2, index % 2)
+
     def get_image_path(self):
         """Return the image path currently entered by the user."""
         return self.image_path_input.text()
@@ -171,6 +249,33 @@ class PantBottleRecognitionWindow(QWidget):
 
     def show_image_menu(self):
         self.stacked_layout.setCurrentWidget(self.image_menu)
+    
+    def show_predict_bottle_menu(self, image_path=None):
+        """Show the image selected from the loaded-image grid."""
+        if image_path is not None:
+            try:
+                self.saved_image_path = image_path
+                self.user_loaded_image = self.image_loader.load(image_path)
+            except (FileNotFoundError, OSError) as error:
+                self.load_status.setText(f"Could not load image: {error}")
+                return
+
+        if self.saved_image_path is None:
+            self.load_status.setText("Load an image first.")
+            return
+
+        pixmap = QPixmap(str(self.saved_image_path))
+        if pixmap.isNull():
+            self.loaded_image_label.setText("Could not display this image.")
+        else:
+            self.loaded_image_label.setPixmap(
+                pixmap.scaled(
+                    self.loaded_image_label.size(),
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
+        self.stacked_layout.setCurrentWidget(self.show_and_predict_image_menu)
 
 
 def run_gui():

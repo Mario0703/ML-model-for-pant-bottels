@@ -25,4 +25,12 @@ class UserImageLoader:
         with Image.open(source) as image:
             image.save(destination)
 
-        return destination, plt.imread(destination)
+        return destination, self.load(destination)
+
+    def load(self, image_path):
+        """Return the pixel data for an image already stored on disk."""
+        source = Path(image_path)
+        if not source.is_file():
+            raise FileNotFoundError(f"Image file not found: {source}")
+
+        return plt.imread(source)
