@@ -353,7 +353,7 @@ class PantBottleRecognitionWindow(QWidget):
         if image_path is not None:
             try:
                 self.saved_image_path = image_path
-                self.user_loaded_image = self.image_loader.load(image_path)
+                self.user_loaded_image = self.image_loader.load_user_file(image_path)
             except (FileNotFoundError, OSError) as error:
                 self.load_status.setText(f"Could not load image: {error}")
                 return
