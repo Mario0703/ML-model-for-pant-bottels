@@ -25,9 +25,10 @@ class PantBottleRecognitionWindow(QWidget):
 
     def __init__(self):
         super().__init__()
+        width, height = 800, 600
 
         self.setWindowTitle("Pant Bottle Recognition")
-        self.resize(800, 600)
+        self.resize(width, height)
         self.image_loader = UserImageLoader()
         self.saved_image_path = None
         self.user_loaded_image = None
