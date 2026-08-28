@@ -203,6 +203,10 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Local image data
+src/user_loaded_image/
+TraningData/
+
 # Ruff stuff:
 .ruff_cache/
 
