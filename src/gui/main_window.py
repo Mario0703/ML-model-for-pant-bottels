@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 )
 from ..inputs.camera_input import CameraInput
 from ..inputs.image_input import UserImageLoader
+from ..YOLO_model.predict import PantBottlePredictor
 
 
 class PantBottleRecognitionWindow(QWidget):
@@ -215,6 +216,11 @@ class PantBottleRecognitionWindow(QWidget):
 
         self.predict_button = QPushButton("Predict bottle")
         self.predict_back_button = QPushButton("Back")
+        self.prediction_result_label = QLabel("Prediction not run")
+        self.prediction_result_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.prediction_result_label.setStyleSheet(
+            "font-size: 18px; font-weight: bold;"
+        )
 
         layout.addWidget(title)
         layout.addWidget(
@@ -225,11 +231,13 @@ class PantBottleRecognitionWindow(QWidget):
             self.predict_button,
             alignment=Qt.AlignmentFlag.AlignHCenter,
         )
+        layout.addWidget(self.prediction_result_label)
         layout.addWidget(
             self.predict_back_button,
             alignment=Qt.AlignmentFlag.AlignHCenter,
         )
 
+        self.predict_button.clicked.connect(self.predict_loaded_image)
         self.predict_back_button.clicked.connect(self.show_image_list_menu)
 
     def select_image(self):
@@ -365,7 +373,25 @@ class PantBottleRecognitionWindow(QWidget):
                     Qt.TransformationMode.SmoothTransformation,
                 )
             )
+        self.prediction_result_label.setText("Prediction not run")
         self.stacked_layout.setCurrentWidget(self.show_and_predict_image_menu)
+
+    def predict_loaded_image(self):
+        """Predict the image currently shown in image mode."""
+        if self.saved_image_path is None:
+            self.prediction_result_label.setText("No image selected")
+            return
+
+        try:
+            predictor = PantBottlePredictor(self.saved_image_path)
+        except (FileNotFoundError, OSError, ValueError) as error:
+            self.prediction_result_label.setText(f"Prediction failed: {error}")
+            return
+
+        self.prediction_result_label.setText(
+            f"Category: {predictor.label}\n"
+            f"Confidence: {predictor.confidence * 100:.2f}%"
+        )
 
 
 def run_gui():
