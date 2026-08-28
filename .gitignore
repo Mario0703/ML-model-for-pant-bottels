@@ -206,6 +206,14 @@ tempCodeRunnerFile.py
 # Local image data
 src/user_loaded_image/
 TraningData/
+TraningData_split/
+TraningData.zip
+
+# Downloaded and trained ML model artifacts
+runs/
+*.pt
+*.onnx
+*.engine
 
 # Ruff stuff:
 .ruff_cache/
