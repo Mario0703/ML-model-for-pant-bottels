@@ -1,7 +1,8 @@
 import sys
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap
+import cv2
+from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -14,7 +15,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from src.image_input import UserImageLoader
+from .camera_input import CameraInput
+from .image_input import UserImageLoader
 
 
 class PantBottleRecognitionWindow(QWidget):
@@ -28,16 +30,19 @@ class PantBottleRecognitionWindow(QWidget):
         self.image_loader = UserImageLoader()
         self.saved_image_path = None
         self.user_loaded_image = None
+        self.camera = CameraInput()
 
         self.stacked_layout = QStackedLayout()
         self._create_main_menu()
         self._create_image_menu()
         self._create_image_list_menu()
+        self._create_camera_menu()
         self._create_predict_bottle_menu()
 
         self.stacked_layout.addWidget(self.main_menu)
         self.stacked_layout.addWidget(self.image_menu)
         self.stacked_layout.addWidget(self.image_list_menu)
+        self.stacked_layout.addWidget(self.camera_menu)
         self.stacked_layout.addWidget(self.show_and_predict_image_menu)
         self.setLayout(self.stacked_layout)
 
@@ -73,6 +78,7 @@ class PantBottleRecognitionWindow(QWidget):
 
         self.bottle_image_button.clicked.connect(self.show_image_menu)
         self.list_images_button.clicked.connect(self.show_image_list_menu)
+        self.bottle_camera_button.clicked.connect(self.show_camera_menu)
 
     def _create_image_menu(self):
         """Build the image-selection page."""
@@ -140,6 +146,53 @@ class PantBottleRecognitionWindow(QWidget):
         layout.addWidget(title)
         layout.addWidget(scroll_area)
         layout.addWidget(back_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+
+    def _create_camera_menu(self):
+        """Build the camera page. Frames come from CameraInput."""
+        self.camera_menu = QWidget()
+        layout = QVBoxLayout(self.camera_menu)
+
+        self.camera_output = QLabel("Camera is not running")
+        self.camera_output.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.camera_output.setMinimumSize(640, 480)
+
+        self.camera_back_button = QPushButton("Exit camera")
+        self.camera_back_button.clicked.connect(self.close_camera)
+
+        layout.addWidget(self.camera_output)
+        layout.addWidget(
+            self.camera_back_button,
+            alignment=Qt.AlignmentFlag.AlignHCenter,
+        )
+
+        self.camera_timer = QTimer(self)
+        self.camera_timer.timeout.connect(self._update_camera_output)
+
+    def _update_camera_output(self):
+        frame = self.camera.get_video_frame()
+        if frame is None:
+            return
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        height, width, channels = frame_rgb.shape
+        bytes_per_line = channels * width
+
+        image = QImage(
+            frame_rgb.data,
+            width,
+            height,
+            bytes_per_line,
+            QImage.Format.Format_RGB888,
+        ).copy()
+
+        self.camera_output.setPixmap(
+            QPixmap.fromImage(image).scaled(
+                self.camera_output.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
 
     def _create_predict_bottle_menu(self):
         self.show_and_predict_image_menu = QWidget()
@@ -250,6 +303,35 @@ class PantBottleRecognitionWindow(QWidget):
     def show_image_menu(self):
         self.stacked_layout.setCurrentWidget(self.image_menu)
     
+    def show_camera_menu(self):
+        self.stacked_layout.setCurrentWidget(self.camera_menu)
+        self.camera_timer.start(30)
+
+    # Keep the old spelling working if it is used elsewhere in the project.
+    def show_camerea_menu(self):
+        self.show_camera_menu()
+
+    def close_camera(self):
+        self.camera_timer.stop()
+        self.camera_output.clear()
+        self.camera_output.setText("Camera is closed")
+        self.show_main_menu()
+
+    def closeEvent(self, event):
+        self.camera_timer.stop()
+        self.camera.release()
+        event.accept()
+
+    def keyPressEvent(self, event):
+        if (
+            self.stacked_layout.currentWidget() == self.camera_menu
+            and event.key() in (Qt.Key.Key_Escape, Qt.Key.Key_Q)
+        ):
+            self.close_camera()
+            return
+
+        super().keyPressEvent(event)
+
     def show_predict_bottle_menu(self, image_path=None):
         """Show the image selected from the loaded-image grid."""
         if image_path is not None:
