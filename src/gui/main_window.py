@@ -258,7 +258,7 @@ class PantBottleRecognitionWindow(QWidget):
         if not image_path:
             self.load_status.setText("Select an image first.")
             return
-        
+
         try:
             self.saved_image_path, self.user_loaded_image = (
                 self.image_loader.copy_and_load(image_path)
@@ -274,11 +274,13 @@ class PantBottleRecognitionWindow(QWidget):
         self._clear_image_grid()
 
         image_extensions = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
-        image_paths = sorted(
-            path
-            for path in self.image_loader.destination_directory.iterdir()
-            if path.is_file() and path.suffix.lower() in image_extensions
-        )
+        image_paths = []
+        
+        for path in self.image_loader.destination_directory.iterdir():
+            if path.is_file() and path.suffix.lower() in image_extensions:
+                image_paths.append(path)
+
+        image_paths.sort()
 
         if not image_paths:
             self.image_grid.addWidget(QLabel("No images have been loaded yet."), 0, 0)
@@ -303,7 +305,7 @@ class PantBottleRecognitionWindow(QWidget):
         image_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
         predict_button = QPushButton("Predict")
         predict_button.clicked.connect(
-            lambda checked=False, path=image_path: self.show_predict_bottle_menu(path)
+            lambda _=False, path=image_path: self.show_predict_bottle_menu(path)
         )
 
         card_layout.addWidget(image_name)
