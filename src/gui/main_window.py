@@ -252,12 +252,12 @@ class PantBottleRecognitionWindow(QWidget):
             self.image_path_input.setText(image_path)
 
     def load_image_into_directory(self):
-        """Copy the entered image to the project and load its pixel data."""
+
         image_path = self.get_image_path().strip()
         if not image_path:
             self.load_status.setText("Select an image first.")
             return
-
+        
         try:
             self.saved_image_path, self.user_loaded_image = (
                 self.image_loader.copy_and_load(image_path)
@@ -349,7 +349,8 @@ class PantBottleRecognitionWindow(QWidget):
         super().keyPressEvent(event)
 
     def show_predict_bottle_menu(self, image_path=None):
-        """Show the image selected from the loaded-image grid."""
+        pixmap = QPixmap(str(self.saved_image_path))
+
         if image_path is not None:
             try:
                 self.saved_image_path = image_path
@@ -362,7 +363,6 @@ class PantBottleRecognitionWindow(QWidget):
             self.load_status.setText("Load an image first.")
             return
 
-        pixmap = QPixmap(str(self.saved_image_path))
         if pixmap.isNull():
             self.loaded_image_label.setText("Could not display this image.")
         else:
@@ -377,11 +377,10 @@ class PantBottleRecognitionWindow(QWidget):
         self.stacked_layout.setCurrentWidget(self.show_and_predict_image_menu)
 
     def predict_loaded_image(self):
-        """Predict the image currently shown in image mode."""
+
         if self.saved_image_path is None:
             self.prediction_result_label.setText("No image selected")
             return
-
         try:
             predictor = PantBottlePredictor(self.saved_image_path)
         except (FileNotFoundError, OSError, ValueError) as error:

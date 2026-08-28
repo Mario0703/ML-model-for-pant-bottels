@@ -15,6 +15,7 @@ class UserImageLoader:
 
         source = Path(image_path)
         destination = self.destination_directory / source.name
+        
         if not source.is_file():
             raise FileNotFoundError(f"Image file not found: {source}")
 
@@ -25,6 +26,8 @@ class UserImageLoader:
 
     def load_user_file(self, image_path):
         source = Path(image_path)
+        
         if not source.is_file():
             raise FileNotFoundError(f"Image file not found: {source}")
+        
         return plt.imread(source)
