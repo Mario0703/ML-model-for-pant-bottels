@@ -35,7 +35,7 @@ class PantBottleRecognitionWindow(QWidget):
         self.setLayout(self.stacked_layout)
 
     def _create_main_menu(self):
-        """Build the application's landing page."""
+        """Build the application's main menu page."""
         self.main_menu = QWidget()
         main_layout = QVBoxLayout(self.main_menu)
 
@@ -103,6 +103,36 @@ class PantBottleRecognitionWindow(QWidget):
         self.select_image_button.clicked.connect(self.select_image)
         self.load_image_button.clicked.connect(self.load_image_into_directory)
         self.back_button.clicked.connect(self.show_main_menu)
+
+    def _create_predict_bottle_menu(self):
+        self.show_and_predict_image_menu = QWidget()
+        layout = QVBoxLayout(self.show_and_predict_image_menu)
+
+        title = QLabel("Bottle prediction")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.loaded_image_label = QLabel("No image loaded")
+        self.loaded_image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.loaded_image_label.setFixedSize(500, 400)
+
+        self.predict_button = QPushButton("Predict bottle")
+        self.predict_back_button = QPushButton("Back")
+
+        layout.addWidget(title)
+        layout.addWidget(
+            self.loaded_image_label,
+            alignment=Qt.AlignmentFlag.AlignHCenter,
+        )
+        layout.addWidget(
+            self.predict_button,
+            alignment=Qt.AlignmentFlag.AlignHCenter,
+        )
+        layout.addWidget(
+            self.predict_back_button,
+            alignment=Qt.AlignmentFlag.AlignHCenter,
+        )
+
+        self.predict_back_button.clicked.connect(self.show_image_menu)
 
     def select_image(self):
         """Prompt for an image file and display its path in the input field."""
