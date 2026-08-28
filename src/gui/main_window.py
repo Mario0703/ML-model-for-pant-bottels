@@ -15,8 +15,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from .camera_input import CameraInput
-from .image_input import UserImageLoader
+from ..inputs.camera_input import CameraInput
+from ..inputs.image_input import UserImageLoader
 
 
 class PantBottleRecognitionWindow(QWidget):

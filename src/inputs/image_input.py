@@ -11,7 +11,7 @@ class UserImageLoader:
         self.destination_directory = (
             Path(destination_directory)
             if destination_directory
-            else Path(__file__).parent / "user_loaded_image"
+            else Path(__file__).resolve().parents[1] / "user_loaded_image"
         )
 
     def copy_and_load(self, image_path):
