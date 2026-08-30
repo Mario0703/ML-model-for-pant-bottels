@@ -1,5 +1,5 @@
 import cv2
-from ..YOLO_model.predict import PantBottlePredictor
+from ..model.predict import PantBottlePredictor
 
 
 class CameraInput:

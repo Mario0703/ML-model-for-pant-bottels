@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (
 )
 from ..inputs.camera_input import CameraInput
 from ..inputs.image_input import UserImageLoader
-from ..YOLO_model.predict import PantBottlePredictor
+from ..model.predict import PantBottlePredictor
 
 
 class PantBottleRecognitionWindow(QWidget):
@@ -352,8 +352,6 @@ class PantBottleRecognitionWindow(QWidget):
         super().keyPressEvent(event)
 
     def show_predict_bottle_menu(self, image_path=None):
-        pixmap = QPixmap(str(self.saved_image_path))
-
         if image_path is not None:
             try:
                 self.saved_image_path = image_path
@@ -366,6 +364,7 @@ class PantBottleRecognitionWindow(QWidget):
             self.load_status.setText("Load an image first.")
             return
 
+        pixmap = QPixmap(str(self.saved_image_path))
         if pixmap.isNull():
             self.loaded_image_label.setText("Could not display this image.")
         else:

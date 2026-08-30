@@ -1,4 +1,6 @@
-from src.gui import run_gui
+"""Application entry point."""
+
+from .gui import run_gui
 
 
 def main() -> int:

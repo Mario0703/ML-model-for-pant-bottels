@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pant-bottle-classifier"
+version = "0.1.0"
+description = "A desktop application for classifying Danish pant bottles."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "matplotlib",
+    "opencv-python",
+    "Pillow",
+    "PyQt6",
+    "ultralytics",
+]
+
+[project.optional-dependencies]
+data = ["pillow-avif-plugin"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+pant-bottle-classifier = "pant_bottle_classifier.main:main"
+pant-bottle-train = "pant_bottle_classifier.model.train:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
